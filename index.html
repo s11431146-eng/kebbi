@@ -3,75 +3,165 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kebbi 居家復健家屬監控網頁</title>
+  <title>居家復健即時監控儀表板</title>
   <style>
-    body { font-family: -apple-system, sans-serif; background: #f0f2f5; margin: 0; padding: 20px; color: #333; }
-    .container { max-width: 700px; margin: 0 auto; }
-    .header { text-align: center; margin-bottom: 20px; }
-    .cards { display: flex; gap: 15px; margin-bottom: 20px; }
-    .card { flex: 1; background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-    .card h3 { margin: 0; font-size: 14px; color: #666; }
-    .card .num { font-size: 26px; font-weight: bold; color: #007bff; margin-top: 8px; }
-    .table-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
-    th { background: #fafafa; color: #666; }
+    :root {
+      --primary: #4f46e5;
+      --bg: #f3f4f6;
+      --card-bg: #ffffff;
+      --text: #1f2937;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+      color: var(--primary);
+      margin-bottom: 24px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .card {
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    }
+    .card h3 {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+      color: #6b7280;
+    }
+    .card .value {
+      font-size: 24px;
+      font-weight: bold;
+      color: var(--primary);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card-bg);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: 14px 16px;
+      text-align: left;
+    }
+    th {
+      background-color: #e0e7ff;
+      color: #3730a3;
+      font-weight: 600;
+    }
+    tr:nth-child(even) {
+      background-color: #f9fafb;
+    }
+    .stars {
+      color: #f59e0b;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h2>🤖 Kebbi 居家復健即時監控</h2>
-      <p>家屬遠端查看儀表板</p>
-    </div>
 
-    <div class="cards">
-      <div class="card"><h3>累積復健次數</h3><div class="num" id="total-count">-- 次</div></div>
-      <div class="card"><h3>歷史平均正確率</h3><div class="num" id="avg-acc">-- %</div></div>
-    </div>
+<div class="container">
+  <h1>🤖 Kebbi 居家復健即時監控儀表板</h1>
 
-    <div class="table-card">
-      <h3>復健與滿意度歷史紀錄</h3>
-      <table>
-        <thead>
-          <tr><th>時間</th><th>患者</th><th>正確率</th><th>滿意度</th></tr>
-        </thead>
-        <tbody id="list">
-          <tr><td colspan="4">載入中...</td></tr>
-        </tbody>
-      </table>
+  <!-- 頂部數據卡片 -->
+  <div class="stats-grid">
+    <div class="card">
+      <h3>目前紀錄患者</h3>
+      <div class="value" id="latest-patient">載入中...</div>
+    </div>
+    <div class="card">
+      <h3>累積復健次數</h3>
+      <div class="value" id="total-count">0 次</div>
+    </div>
+    <div class="card">
+      <h3>最新滿意度</h3>
+      <div class="value stars" id="latest-satisfaction">-</div>
     </div>
   </div>
 
-  <script>
-    // ⚠️ 請把下面這行換成你第一階段取得的 Google API 網址！
-    const API_URL = "https://script.google.com/macros/s/你的_GAS_DEPLOY_ID/exec";
+  <!-- 歷史紀錄表格 -->
+  <div class="card">
+    <h3 style="font-size: 18px; color: var(--text); margin-bottom: 16px;">📋 即時復健紀錄歷史</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>時間</th>
+          <th>患者姓名</th>
+          <th>復健部位 / 動作</th>
+          <th>滿意度評分</th>
+        </tr>
+      </thead>
+      <tbody id="record-table-body">
+        <tr>
+          <td colspan="4" style="text-align:center; color:#9ca3af;">資料同步中...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 
-    async function loadData() {
-      try {
-        const res = await fetch(API_URL);
-        const data = await res.json();
-        
-        document.getElementById('total-count').innerText = data.total_sessions + " 次";
-        document.getElementById('avg-acc').innerText = data.avg_accuracy + " %";
-        
-        let html = "";
-        data.records.forEach(r => {
-          html += `<tr>
-            <td>${r.time}</td>
-            <td>${r.name}</td>
-            <td><strong>${r.accuracy}%</strong></td>
-            <td>${r.satisfaction} ★</td>
-          </tr>`;
+<script>
+  // ⚠️ 請填入您的 Google Apps Script Web App 網址 (/exec 結尾)
+  const GAS_API_URL = "https://script.google.com/macros/s/你的_GAS_DEPLOY_ID/exec";
+
+  async function fetchDashboardData() {
+    try {
+      const response = await fetch(GAS_API_URL);
+      const data = await response.json();
+      
+      if (data && data.length > 0) {
+        // 1. 更新頂部摘要卡片 (抓最後一筆)
+        const latest = data[data.length - 1];
+        document.getElementById("latest-patient").innerText = latest.patient_name || "無資料";
+        document.getElementById("total-count").innerText = `${data.length} 次`;
+        document.getElementById("latest-satisfaction").innerText = "⭐".repeat(latest.satisfaction || 5);
+
+        // 2. 更新歷史紀錄表格 (反轉陣列，最新紀錄排最上面)
+        const tbody = document.getElementById("record-table-body");
+        tbody.innerHTML = "";
+
+        data.slice().reverse().forEach(row => {
+          const tr = document.createElement("tr");
+          
+          // 格式化時間 (如果 GAS 沒有回傳時間，自動預設)
+          const timeStr = row.timestamp ? new Date(row.timestamp).toLocaleString("zh-TW") : "剛才";
+          const starsStr = "⭐".repeat(row.satisfaction || 5);
+
+          tr.innerHTML = `
+            <td>${timeStr}</td>
+            <td><strong>${row.patient_name}</strong></td>
+            <td>${row.action_name || row.body_part || "肩關節練習"}</td>
+            <td class="stars">${starsStr} (${row.satisfaction || 5}分)</td>
+          `;
+          tbody.appendChild(tr);
         });
-        document.getElementById('list').innerHTML = html || "<tr><td colspan='4'>尚無紀錄</td></tr>";
-      } catch (err) {
-        console.error(err);
       }
+    } catch (error) {
+      console.error("無法抓取資料:", error);
     }
+  }
 
-    loadData();
-    setInterval(loadData, 5000); // 每 5 秒自動刷新一次
-  </script>
+  // 初次載入與每 5 秒自動輪詢更新
+  fetchDashboardData();
+  setInterval(fetchDashboardData, 5000);
+</script>
+
 </body>
 </html>
